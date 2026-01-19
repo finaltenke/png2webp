@@ -1,5 +1,7 @@
 # PNG to WebP Converter
 
+[繁體中文](README_zh-TW.md)
+
 A macOS desktop app to convert PNG images to WebP format with drag & drop support.
 
 ## Features
