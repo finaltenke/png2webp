@@ -1,16 +1,43 @@
-# png2webp_app
+# PNG to WebP Converter
 
-A new Flutter project.
+一個 macOS 桌面應用程式，支援拖放 PNG 圖片轉換為 WebP 格式。
 
-## Getting Started
+## 功能
 
-This project is a starting point for a Flutter application.
+- 拖放 PNG 檔案即可轉換
+- 可調整輸出品質 (0-100)
+- 輸出檔案自動儲存在原檔案相同位置
+- 顯示轉換結果：檔案大小變化、壓縮比例
+- 支援深色/淺色模式
 
-A few resources to get you started if this is your first Flutter project:
+## 需求
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- macOS
+- Flutter SDK
+- cwebp (透過 Homebrew 安裝)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```bash
+brew install webp
+```
+
+## 執行
+
+```bash
+flutter run -d macos
+```
+
+## 建置
+
+```bash
+flutter build macos
+```
+
+建置完成後，應用程式位於 `build/macos/Build/Products/Release/png2webp_app.app`
+
+## 截圖
+
+拖放 PNG 檔案到應用程式視窗，即可自動轉換為 WebP 格式。
+
+## 授權
+
+MIT License
