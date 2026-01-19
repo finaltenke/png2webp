@@ -7,6 +7,33 @@ void main() {
   runApp(const Png2WebpApp());
 }
 
+// Localization
+class L10n {
+  static Locale? _locale;
+
+  static void init(BuildContext context) {
+    _locale = Localizations.localeOf(context);
+  }
+
+  static bool get isZh => _locale?.languageCode == 'zh';
+
+  static String get quality => isZh ? '品質：' : 'Quality:';
+  static String get converting => isZh ? '轉換中...' : 'Converting...';
+  static String get dropToConvert => isZh ? '放開以轉換' : 'Drop to convert';
+  static String get dragPngHere => isZh ? '拖放 PNG 檔案到這裡' : 'Drag & drop PNG files here';
+  static String get outputSameLocation => isZh ? '輸出檔案會儲存在相同位置' : 'Output saved to same location';
+  static String get results => isZh ? '轉換結果' : 'Results';
+  static String get clear => isZh ? '清除' : 'Clear';
+  static String get fileNotFound => isZh ? '檔案不存在' : 'File not found';
+  static String get pngOnly => isZh ? '只支援 PNG 檔案' : 'Only PNG files supported';
+  static String get success => isZh ? '轉換成功！' : 'Conversion successful!';
+  static String conversionFailed(String err) => isZh ? '轉換失敗：$err' : 'Conversion failed: $err';
+  static String error(String err) => isZh ? '發生錯誤：$err' : 'Error: $err';
+  static String get cwebpNotFound => isZh ? '找不到 cwebp，請先執行：brew install webp' : 'cwebp not found. Please run: brew install webp';
+  static String get showInFinder => isZh ? '在 Finder 中顯示' : 'Show in Finder';
+  static String qualityLabel(int q) => isZh ? '品質: $q' : 'Quality: $q';
+}
+
 class Png2WebpApp extends StatelessWidget {
   const Png2WebpApp({super.key});
 
@@ -50,39 +77,38 @@ class _ConverterPageState extends State<ConverterPage> {
 
   Future<void> _convertFile(String inputPath) async {
     debugPrint('[PNG2WebP] ========================================');
-    debugPrint('[PNG2WebP] 開始處理: $inputPath');
+    debugPrint('[PNG2WebP] Processing: $inputPath');
 
     final file = File(inputPath);
     if (!await file.exists()) {
-      debugPrint('[PNG2WebP] 錯誤: 檔案不存在');
+      debugPrint('[PNG2WebP] Error: File not found');
       _addResult(ConversionResult(
         inputPath: inputPath,
         success: false,
-        message: '檔案不存在',
+        message: L10n.fileNotFound,
       ));
       return;
     }
 
     final ext = p.extension(inputPath).toLowerCase();
-    debugPrint('[PNG2WebP] 副檔名: $ext');
+    debugPrint('[PNG2WebP] Extension: $ext');
     if (ext != '.png') {
-      debugPrint('[PNG2WebP] 錯誤: 不是 PNG 檔案');
+      debugPrint('[PNG2WebP] Error: Not a PNG file');
       _addResult(ConversionResult(
         inputPath: inputPath,
         success: false,
-        message: '只支援 PNG 檔案',
+        message: L10n.pngOnly,
       ));
       return;
     }
 
-    // 輸出路徑與輸入相同，只是副檔名改為 .webp
     final outputPath = '${p.withoutExtension(inputPath)}.webp';
-    debugPrint('[PNG2WebP] 輸出路徑: $outputPath');
-    debugPrint('[PNG2WebP] 品質: ${_quality.toInt()}');
+    debugPrint('[PNG2WebP] Output: $outputPath');
+    debugPrint('[PNG2WebP] Quality: ${_quality.toInt()}');
 
     final command = 'cwebp';
     final args = ['-q', _quality.toInt().toString(), inputPath, '-o', outputPath];
-    debugPrint('[PNG2WebP] 執行命令: $command ${args.join(' ')}');
+    debugPrint('[PNG2WebP] Command: $command ${args.join(' ')}');
 
     try {
       final result = await Process.run(command, args);
@@ -97,33 +123,33 @@ class _ConverterPageState extends State<ConverterPage> {
         final outputSize = await outputFile.length();
         final ratio = (outputSize / inputSize * 100).toStringAsFixed(1);
 
-        debugPrint('[PNG2WebP] 轉換成功! $inputSize bytes → $outputSize bytes ($ratio%)');
+        debugPrint('[PNG2WebP] Success! $inputSize bytes → $outputSize bytes ($ratio%)');
 
         _addResult(ConversionResult(
           inputPath: inputPath,
           outputPath: outputPath,
           success: true,
-          message: '轉換成功！',
+          message: L10n.success,
           inputSize: inputSize,
           outputSize: outputSize,
           compressionRatio: ratio,
           quality: _quality.toInt(),
         ));
       } else {
-        debugPrint('[PNG2WebP] 轉換失敗: ${result.stderr}');
+        debugPrint('[PNG2WebP] Failed: ${result.stderr}');
         _addResult(ConversionResult(
           inputPath: inputPath,
           success: false,
-          message: '轉換失敗：${result.stderr}',
+          message: L10n.conversionFailed(result.stderr.toString()),
         ));
       }
     } catch (e, stackTrace) {
       debugPrint('[PNG2WebP] Exception: $e');
       debugPrint('[PNG2WebP] StackTrace: $stackTrace');
 
-      String errorMessage = '發生錯誤：$e';
+      String errorMessage = L10n.error(e.toString());
       if (e.toString().contains('cwebp')) {
-        errorMessage = '找不到 cwebp，請先執行：brew install webp';
+        errorMessage = L10n.cwebpNotFound;
       }
       _addResult(ConversionResult(
         inputPath: inputPath,
@@ -155,6 +181,8 @@ class _ConverterPageState extends State<ConverterPage> {
 
   @override
   Widget build(BuildContext context) {
+    L10n.init(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('PNG to WebP Converter'),
@@ -164,13 +192,12 @@ class _ConverterPageState extends State<ConverterPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // 品質設定
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
                   children: [
-                    const Text('品質：'),
+                    Text(L10n.quality),
                     Expanded(
                       child: Slider(
                         value: _quality,
@@ -200,7 +227,6 @@ class _ConverterPageState extends State<ConverterPage> {
               ),
             ),
             const SizedBox(height: 16),
-            // 拖放區域
             Expanded(
               flex: 2,
               child: DropTarget(
@@ -219,20 +245,21 @@ class _ConverterPageState extends State<ConverterPage> {
                         : Theme.of(context).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color:
-                          _isDragging ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outline,
+                      color: _isDragging
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.outline,
                       width: _isDragging ? 3 : 2,
                       strokeAlign: BorderSide.strokeAlignInside,
                     ),
                   ),
                   child: Center(
                     child: _isConverting
-                        ? const Column(
+                        ? Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              CircularProgressIndicator(),
-                              SizedBox(height: 16),
-                              Text('轉換中...'),
+                              const CircularProgressIndicator(),
+                              const SizedBox(height: 16),
+                              Text(L10n.converting),
                             ],
                           )
                         : Column(
@@ -247,7 +274,7 @@ class _ConverterPageState extends State<ConverterPage> {
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                _isDragging ? '放開以轉換' : '拖放 PNG 檔案到這裡',
+                                _isDragging ? L10n.dropToConvert : L10n.dragPngHere,
                                 style: TextStyle(
                                   fontSize: 18,
                                   color: _isDragging
@@ -257,7 +284,7 @@ class _ConverterPageState extends State<ConverterPage> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                '輸出檔案會儲存在相同位置',
+                                L10n.outputSameLocation,
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -270,21 +297,20 @@ class _ConverterPageState extends State<ConverterPage> {
               ),
             ),
             const SizedBox(height: 16),
-            // 轉換結果列表
             if (_results.isNotEmpty) ...[
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    '轉換結果',
-                    style: TextStyle(
+                  Text(
+                    L10n.results,
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   TextButton(
                     onPressed: () => setState(() => _results.clear()),
-                    child: const Text('清除'),
+                    child: Text(L10n.clear),
                   ),
                 ],
               ),
@@ -373,7 +399,7 @@ class ResultCard extends StatelessWidget {
                     if (result.success && result.inputSize != null && result.outputSize != null) ...[
                       const SizedBox(height: 4),
                       Text(
-                        '${_formatSize(result.inputSize!)} → ${_formatSize(result.outputSize!)} (${result.compressionRatio}%) | 品質: ${result.quality}',
+                        '${_formatSize(result.inputSize!)} → ${_formatSize(result.outputSize!)} (${result.compressionRatio}%) | ${L10n.qualityLabel(result.quality!)}',
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.primary,
                           fontWeight: FontWeight.w500,
@@ -387,7 +413,7 @@ class ResultCard extends StatelessWidget {
             if (result.success)
               IconButton(
                 icon: const Icon(Icons.folder_open),
-                tooltip: '在 Finder 中顯示',
+                tooltip: L10n.showInFinder,
                 onPressed: () {
                   Process.run('open', ['-R', result.outputPath!]);
                 },
